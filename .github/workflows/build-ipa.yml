@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     name: Build unsigned IPA
-    runs-on: macos-15
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Install system dependencies
+      - name: Generate lockfile and install
         run: |
-          brew list --cask swiftformat 2>/dev/null || true
-          brew install --cask swiftformat 2>/dev/null || true
+          npm install --package-lock-only --legacy-peer-deps
+          npm install --legacy-peer-deps
 
       - name: Install npm dependencies
         run: npm install --legacy-peer-deps
