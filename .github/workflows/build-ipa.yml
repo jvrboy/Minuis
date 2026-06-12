@@ -30,7 +30,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Expo prebuild (iOS)
-        run: npx expo prebuild --platform ios --no-install
+        run: npx expo prebuild --platform ios
 
       - name: Configure Xcode for unsigned build
         run: |
