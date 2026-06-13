@@ -2,16 +2,116 @@ import type { AppSettings, Timeframe, StrategyPresetConfig, NewsFilter } from '.
 
 export const DERIV_WS_URL = 'wss://ws.derivws.com/websockets/v3';
 
-export const DEFAULT_SYMBOLS = [
-  'frxEURUSD', 'frxGBPUSD', 'frxUSDJPY', 'frxAUDUSD', 'frxUSDCAD',
-  'frxUSDCHF', 'frxNZDUSD', 'frxEURGBP', 'frxEURJPY', 'frxGBPJPY',
-];
+export const SYMBOL_CATEGORIES = ['forex', 'metal', 'crypto', 'synthetic', 'stock', 'index'] as const;
 
-export const SYMBOL_NAMES: Record<string, string> = {
-  frxEURUSD: 'EUR/USD', frxGBPUSD: 'GBP/USD', frxUSDJPY: 'USD/JPY',
-  frxAUDUSD: 'AUD/USD', frxUSDCAD: 'USD/CAD', frxUSDCHF: 'USD/CHF',
-  frxNZDUSD: 'NZD/USD', frxEURGBP: 'EUR/GBP', frxEURJPY: 'EUR/JPY',
-  frxGBPJPY: 'GBP/JPY',
+export const ALL_SYMBOLS: Record<string, { category: string; name: string }> = {
+  // Forex Majors
+  frxEURUSD: { category: 'forex', name: 'EUR/USD' },
+  frxGBPUSD: { category: 'forex', name: 'GBP/USD' },
+  frxUSDJPY: { category: 'forex', name: 'USD/JPY' },
+  frxAUDUSD: { category: 'forex', name: 'AUD/USD' },
+  frxUSDCAD: { category: 'forex', name: 'USD/CAD' },
+  frxUSDCHF: { category: 'forex', name: 'USD/CHF' },
+  frxNZDUSD: { category: 'forex', name: 'NZD/USD' },
+  // Forex Crosses
+  frxEURGBP: { category: 'forex', name: 'EUR/GBP' },
+  frxEURJPY: { category: 'forex', name: 'EUR/JPY' },
+  frxGBPJPY: { category: 'forex', name: 'GBP/JPY' },
+  frxEURCHF: { category: 'forex', name: 'EUR/CHF' },
+  frxEURAUD: { category: 'forex', name: 'EUR/AUD' },
+  frxEURCAD: { category: 'forex', name: 'EUR/CAD' },
+  frxEURNZD: { category: 'forex', name: 'EUR/NZD' },
+  frxGBPCHF: { category: 'forex', name: 'GBP/CHF' },
+  frxGBPAUD: { category: 'forex', name: 'GBP/AUD' },
+  frxGBPCAD: { category: 'forex', name: 'GBP/CAD' },
+  frxGBPNZD: { category: 'forex', name: 'GBP/NZD' },
+  frxAUDJPY: { category: 'forex', name: 'AUD/JPY' },
+  frxAUDCHF: { category: 'forex', name: 'AUD/CHF' },
+  frxAUDCAD: { category: 'forex', name: 'AUD/CAD' },
+  frxAUDNZD: { category: 'forex', name: 'AUD/NZD' },
+  frxCADJPY: { category: 'forex', name: 'CAD/JPY' },
+  frxCADCHF: { category: 'forex', name: 'CAD/CHF' },
+  frxNZDJPY: { category: 'forex', name: 'NZD/JPY' },
+  frxNZDCHF: { category: 'forex', name: 'NZD/CHF' },
+  frxNZDCAD: { category: 'forex', name: 'NZD/CAD' },
+  frxCHFJPY: { category: 'forex', name: 'CHF/JPY' },
+  // Exotics
+  frxUSDTRY: { category: 'forex', name: 'USD/TRY' },
+  frxEURTRY: { category: 'forex', name: 'EUR/TRY' },
+  frxUSDMXN: { category: 'forex', name: 'USD/MXN' },
+  frxUSDZAR: { category: 'forex', name: 'USD/ZAR' },
+  frxUSDSGD: { category: 'forex', name: 'USD/SGD' },
+  frxUSDHKD: { category: 'forex', name: 'USD/HKD' },
+  frxUSDNOK: { category: 'forex', name: 'USD/NOK' },
+  frxUSDSEK: { category: 'forex', name: 'USD/SEK' },
+  frxUSDPLN: { category: 'forex', name: 'USD/PLN' },
+  frxUSDCZK: { category: 'forex', name: 'USD/CZK' },
+  // Metals
+  frxXAUUSD: { category: 'metal', name: 'XAU/USD (Gold)' },
+  frxXAGUSD: { category: 'metal', name: 'XAG/USD (Silver)' },
+  frxXAUXAG: { category: 'metal', name: 'XAU/XAG' },
+  frxXPDUSD: { category: 'metal', name: 'XPD/USD (Palladium)' },
+  frxXPTUSD: { category: 'metal', name: 'XPT/USD (Platinum)' },
+  // Crypto
+  BTC: { category: 'crypto', name: 'Bitcoin' },
+  ETH: { category: 'crypto', name: 'Ethereum' },
+  LTC: { category: 'crypto', name: 'Litecoin' },
+  XRP: { category: 'crypto', name: 'Ripple' },
+  BCH: { category: 'crypto', name: 'Bitcoin Cash' },
+  EOS: { category: 'crypto', name: 'EOS' },
+  // Synthetics (Deriv)
+  R_10: { category: 'synthetic', name: 'Volatility 10 Index' },
+  R_25: { category: 'synthetic', name: 'Volatility 25 Index' },
+  R_50: { category: 'synthetic', name: 'Volatility 50 Index' },
+  R_75: { category: 'synthetic', name: 'Volatility 75 Index' },
+  R_100: { category: 'synthetic', name: 'Volatility 100 Index' },
+  R_150: { category: 'synthetic', name: 'Volatility 150 Index' },
+  R_200: { category: 'synthetic', name: 'Volatility 200 Index' },
+  R_250: { category: 'synthetic', name: 'Volatility 250 Index' },
+  R_300: { category: 'synthetic', name: 'Volatility 300 Index' },
+  BOOM300: { category: 'synthetic', name: 'Boom 300 Index' },
+  BOOM500: { category: 'synthetic', name: 'Boom 500 Index' },
+  BOOM1000: { category: 'synthetic', name: 'Boom 1000 Index' },
+  CRASH300: { category: 'synthetic', name: 'Crash 300 Index' },
+  CRASH500: { category: 'synthetic', name: 'Crash 500 Index' },
+  CRASH1000: { category: 'synthetic', name: 'Crash 1000 Index' },
+  // Stocks
+  STK_APPLE: { category: 'stock', name: 'Apple' },
+  STK_GOOGLE: { category: 'stock', name: 'Google' },
+  STK_AMAZON: { category: 'stock', name: 'Amazon' },
+  STK_MICROSOFT: { category: 'stock', name: 'Microsoft' },
+  STK_META: { category: 'stock', name: 'Meta' },
+  STK_NVIDIA: { category: 'stock', name: 'NVIDIA' },
+  STK_TESLA: { category: 'stock', name: 'Tesla' },
+  STK_JPM: { category: 'stock', name: 'JP Morgan' },
+  STK_VISA: { category: 'stock', name: 'Visa' },
+  STK_NFLX: { category: 'stock', name: 'Netflix' },
+  // Indices
+  US30: { category: 'index', name: 'US Wall Street 30' },
+  US100: { category: 'index', name: 'US Nasdaq 100' },
+  US500: { category: 'index', name: 'US S&P 500' },
+  FRA40: { category: 'index', name: 'France 40' },
+  GER40: { category: 'index', name: 'Germany 40' },
+  UK100: { category: 'index', name: 'UK 100' },
+  JPN225: { category: 'index', name: 'Japan 225' },
+  AUS200: { category: 'index', name: 'Australia 200' },
+  EU50: { category: 'index', name: 'Europe 50' },
+  HKG33: { category: 'index', name: 'Hong Kong 33' },
+};
+
+export const SYMBOL_NAMES: Record<string, string> = Object.fromEntries(
+  Object.entries(ALL_SYMBOLS).map(([k, v]) => [k, v.name])
+);
+
+export const DEFAULT_SYMBOLS = ['frxEURUSD', 'frxGBPUSD', 'frxUSDJPY', 'frxAUDUSD', 'frxUSDCAD'];
+
+export const CATEGORY_SYMBOLS: Record<string, string[]> = {
+  forex: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'forex').map(([k]) => k),
+  metal: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'metal').map(([k]) => k),
+  crypto: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'crypto').map(([k]) => k),
+  synthetic: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'synthetic').map(([k]) => k),
+  stock: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'stock').map(([k]) => k),
+  index: Object.entries(ALL_SYMBOLS).filter(([, v]) => v.category === 'index').map(([k]) => k),
 };
 
 export const TIMEFRAMES: Timeframe[] = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
@@ -131,4 +231,13 @@ export const ECONOMIC_EVENTS = [
 export const COUNTRY_FLAGS: Record<string, string> = {
   US: '🇺🇸', EU: '🇪🇺', UK: '🇬🇧', JP: '🇯🇵',
   AU: '🇦🇺', CA: '🇨🇦', NZ: '🇳🇿', CH: '🇨🇭',
+};
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  forex: '#58A6FF',
+  metal: '#F0883E',
+  crypto: '#D29922',
+  synthetic: '#BC8CFF',
+  stock: '#39D2C0',
+  index: '#3FB950',
 };

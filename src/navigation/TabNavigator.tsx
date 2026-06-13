@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
+import { useColors } from '../theme/colors';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import SignalsScreen from '../screens/SignalsScreen';
@@ -9,12 +9,15 @@ import ChartScreen from '../screens/ChartScreen';
 import PortfolioScreen from '../screens/PortfolioScreen';
 import BacktestScreen from '../screens/BacktestScreen';
 import EconomicScreen from '../screens/EconomicScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+  const COLORS = useColors();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -23,13 +26,14 @@ export default function TabNavigator() {
           backgroundColor: COLORS.bgSecondary,
           borderTopColor: COLORS.border,
           borderTopWidth: 1,
-          height: 56,
-          paddingBottom: 6,
+          height: 52,
+          paddingBottom: 4,
           paddingTop: 4,
         },
         tabBarActiveTintColor: COLORS.accentBlue,
         tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarLabelStyle: { fontSize: 9, fontWeight: '600', letterSpacing: 0.2 },
+        tabBarLabelStyle: { fontSize: 8, fontWeight: '600', letterSpacing: 0.2 },
+        tabBarIconStyle: { marginBottom: -2 },
       }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{
@@ -42,7 +46,11 @@ export default function TabNavigator() {
       }} />
       <Tab.Screen name="Charts" component={ChartScreen} options={{
         tabBarLabel: 'Charts',
-        tabBarIcon: ({ color, size }) => <Ionicons name="candles" size={size} color={color} />,
+        tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart" size={size} color={color} />,
+      }} />
+      <Tab.Screen name="AI" component={ChatbotScreen} options={{
+        tabBarLabel: 'AI Chat',
+        tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles" size={size} color={color} />,
       }} />
       <Tab.Screen name="Portfolio" component={PortfolioScreen} options={{
         tabBarLabel: 'Portfolio',

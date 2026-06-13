@@ -11,6 +11,8 @@ import { derivApi } from './src/services/derivApi';
 import { runSignalEngine } from './src/engine/signals';
 import { openTrade, checkStopLossTakeProfit, closeTrade } from './src/engine/portfolio';
 import AlertBanner from './src/components/AlertBanner';
+import { autoBacktest } from './src/services/autoBacktest';
+import { learningSystem } from './src/services/learningSystem';
 import { COLORS, LIGHT_COLORS } from './src/constants';
 
 const darkTheme = {
@@ -106,6 +108,19 @@ export default function App() {
     const interval = setInterval(runSignalEngine, settings.performanceMode ? 30000 : 15000);
     return () => clearInterval(interval);
   }, [settings.performanceMode]);
+
+  useEffect(() => {
+    autoBacktest.start();
+    return () => autoBacktest.stop();
+  }, []);
+
+  useEffect(() => {
+    for (const signal of signalHistory) {
+      if (signal.status === 'HIT_TP' || signal.status === 'HIT_SL') {
+        learningSystem.learnFromSignal(signal);
+      }
+    }
+  }, [signalHistory.length]);
 
   if (!onboardingComplete) {
     return (

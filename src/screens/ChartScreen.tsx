@@ -2,19 +2,33 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CandlestickChart from '../components/CandlestickChart';
+import MarketProfileChart from '../components/MarketProfileChart';
 import { useStore } from '../store/useStore';
-import { SYMBOL_NAMES, TIMEFRAMES } from '../constants';
+import { SYMBOL_NAMES, TIMEFRAMES, CANDLE_INTERVAL_MAP } from '../constants';
 import { useColors } from '../theme/colors';
-import type { Timeframe } from '../types';
+import type { Timeframe, Candle } from '../types';
 
 export default function ChartScreen() {
   const COLORS = useColors();
-  const { candles, settings } = useStore();
+  const { candles, settings, lastTick } = useStore();
   const [selectedSymbol, setSelectedSymbol] = useState(settings.symbols[0] || 'frxEURUSD');
   const [selectedTF, setSelectedTF] = useState<Timeframe>(settings.timeframe);
   const [showSR, setShowSR] = useState(true);
 
   const chartCandles = candles[selectedSymbol] || [];
+
+  const { yesterdayCandles, todayCandles } = useMemo(() => {
+    const now = Date.now() / 1000;
+    const oneDay = 86400;
+    const todayStart = Math.floor(now / oneDay) * oneDay;
+    const yesterday: Candle[] = [];
+    const today: Candle[] = [];
+    for (const c of chartCandles) {
+      if (c.time < todayStart) yesterday.push(c);
+      else today.push(c);
+    }
+    return { yesterdayCandles: yesterday, todayCandles: today };
+  }, [chartCandles]);
 
   const stats = useMemo(() => {
     if (chartCandles.length === 0) return null;
@@ -77,6 +91,15 @@ export default function ChartScreen() {
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: COLORS.candleDown }]} /><Text style={[styles.legendText, { color: COLORS.textMuted }]}>Bearish</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: COLORS.accentOrange }]} /><Text style={[styles.legendText, { color: COLORS.textMuted }]}>S/R</Text></View>
       </View>
+
+      <ScrollView style={{ maxHeight: 280 }}>
+        <MarketProfileChart
+          yesterdayCandles={yesterdayCandles}
+          todayCandles={todayCandles}
+          currentPrice={lastTick?.quote || stats?.close || 0}
+          symbol={SYMBOL_NAMES[selectedSymbol] || selectedSymbol}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 }

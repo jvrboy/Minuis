@@ -13,11 +13,13 @@ class DerivApi {
   private tickSubscriptions: Set<string> = new Set();
   private candleSubscriptions: Map<string, Timeframe> = new Map();
   private isConnecting = false;
+  private manualDisconnect = false;
 
   connect(): Promise<void> {
     if (this.ws?.readyState === WebSocket.OPEN) return Promise.resolve();
     if (this.isConnecting) return new Promise((r) => setTimeout(r, 500).then(() => this.connect()));
 
+    this.manualDisconnect = false;
     this.isConnecting = true;
     return new Promise((resolve, reject) => {
       try {
@@ -40,7 +42,9 @@ class DerivApi {
         this.ws.onclose = () => {
           this.isConnecting = false;
           useStore.getState().setConnection({ connected: false });
-          this.scheduleReconnect();
+          if (!this.manualDisconnect) {
+            this.scheduleReconnect();
+          }
         };
 
         this.ws.onerror = () => {
@@ -69,7 +73,7 @@ class DerivApi {
     }
 
     if (msg.msg_type === 'candles') {
-      const candles: Candle[] = msg.candles.map((c: any) => ({
+      const candles: Candle[] = (msg.candles || []).map((c: any) => ({
         symbol: msg.echo_req?.symbol || '',
         time: c.epoch,
         open: c.open,
@@ -195,9 +199,16 @@ class DerivApi {
   async getActiveSymbols(): Promise<string[]> {
     try {
       const resp = await this.send({ active_symbols: 'brief' });
-      return (resp.active_symbols || [])
-        .filter((s: any) => s.market === 'forex')
-        .map((s: any) => s.symbol);
+      return (resp.active_symbols || []).map((s: any) => s.symbol);
+    } catch {
+      return [];
+    }
+  }
+
+  async getTradingTimes(): Promise<any[]> {
+    try {
+      const resp = await this.send({ trading_times: new Date().toISOString().split('T')[0] });
+      return resp.trading_times?.markets || [];
     } catch {
       return [];
     }
@@ -214,11 +225,17 @@ class DerivApi {
   }
 
   disconnect() {
+    this.manualDisconnect = true;
     this.tickSubscriptions.clear();
     this.candleSubscriptions.clear();
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.ws?.close();
     this.ws = null;
+  }
+
+  forceReconnect() {
+    this.disconnect();
+    setTimeout(() => this.connect(), 500);
   }
 
   isConnected(): boolean {

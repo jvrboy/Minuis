@@ -1,5 +1,7 @@
 export type SymbolKey = string;
 
+export type SymbolCategory = 'forex' | 'metal' | 'crypto' | 'synthetic' | 'stock' | 'index';
+
 export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d';
 
 export type SignalDirection = 'BUY' | 'SELL';
@@ -298,4 +300,41 @@ export interface ConnectionStatus {
   symbol: string;
   lastTick?: Tick;
   latencyMs?: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+}
+
+export interface LLMModel {
+  id: string;
+  name: string;
+  path: string;
+  size: number;
+  loaded: boolean;
+}
+
+export interface LearningEntry {
+  signalId: string;
+  symbol: string;
+  direction: SignalDirection;
+  entry: number;
+  exit: number;
+  profit: number;
+  confidence: number;
+  reasons: string[];
+  outcome: 'HIT_TP' | 'HIT_SL';
+  learnedAt: number;
+  pattern: string;
+}
+
+export interface AutoBacktestConfig {
+  enabled: boolean;
+  intervalMs: number;
+  symbols: string[];
+  timeframes: Timeframe[];
+  maxResults: number;
 }

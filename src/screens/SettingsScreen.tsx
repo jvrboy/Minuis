@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Switch } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store/useStore';
 import { saveSettings, loadSettings } from '../services/storage';
 import { derivApi } from '../services/derivApi';
-import { COLORS, SYMBOL_NAMES, TIMEFRAMES, DEFAULT_SYMBOLS, STRATEGY_PRESETS } from '../constants';
+import { autoBacktest } from '../services/autoBacktest';
+import { COLORS, SYMBOL_NAMES, TIMEFRAMES, DEFAULT_SYMBOLS, STRATEGY_PRESETS, CATEGORY_SYMBOLS, SYMBOL_CATEGORIES, CATEGORY_COLORS } from '../constants';
 import { signalsToCSV, tradesToCSV, shareCSV } from '../services/export';
 import type { Timeframe, StrategyPreset } from '../types';
 
@@ -72,6 +74,7 @@ export default function SettingsScreen() {
   const { settings, setSettings, connection, signalHistory, trades } = useStore();
   const [minConfStr, setMinConfStr] = useState(String(settings.minConfidence));
   const [balanceStr, setBalanceStr] = useState(String(settings.virtualBalance));
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings().then((s) => {
@@ -100,7 +103,7 @@ export default function SettingsScreen() {
     setMinConfStr(String(c.minConfidence));
   }, [setSettings]);
 
-  const handleReconnect = useCallback(() => { derivApi.disconnect(); setTimeout(() => derivApi.connect(), 1000); }, []);
+  const handleReconnect = useCallback(() => { derivApi.forceReconnect(); }, []);
 
   const handleExportSignals = useCallback(async () => {
     if (signalHistory.length === 0) return;
@@ -163,9 +166,24 @@ export default function SettingsScreen() {
         {/* Active Symbols */}
         <SectionHeader title="Active Symbols" />
         <View style={styles.card}>
-          {DEFAULT_SYMBOLS.map((symbol) => (
-            <SymbolToggle key={symbol} symbol={symbol} enabled={settings.symbols.includes(symbol)} onToggle={() => toggleSymbol(symbol)} />
-          ))}
+          {SYMBOL_CATEGORIES.map((cat) => {
+            const catSymbols = CATEGORY_SYMBOLS[cat] || [];
+            const activeCount = catSymbols.filter((s) => settings.symbols.includes(s)).length;
+            const isExpanded = expandedCategory === cat;
+            return (
+              <View key={cat}>
+                <TouchableOpacity style={styles.categoryRow} onPress={() => setExpandedCategory(isExpanded ? null : cat)}>
+                  <View style={[styles.categoryDot, { backgroundColor: CATEGORY_COLORS[cat] || COLORS.accentBlue }]} />
+                  <Text style={[styles.categoryName, { color: COLORS.textPrimary }]}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>
+                  <Text style={[styles.categoryCount, { color: COLORS.textMuted }]}>{activeCount}/{catSymbols.length}</Text>
+                  <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.textMuted} />
+                </TouchableOpacity>
+                {isExpanded && catSymbols.map((symbol) => (
+                  <SymbolToggle key={symbol} symbol={symbol} enabled={settings.symbols.includes(symbol)} onToggle={() => toggleSymbol(symbol)} />
+                ))}
+              </View>
+            );
+          })}
         </View>
 
         {/* Timeframe */}
@@ -281,6 +299,31 @@ export default function SettingsScreen() {
           <Text style={styles.hint}>App will lock when backgrounded</Text>
         </View>
 
+        {/* Learning System */}
+        <SectionHeader title="AI Learning" />
+        <View style={styles.card}>
+          <ToggleRow label="Enable Learning" value={useStore.getState().learningEnabled} onToggle={() => useStore.getState().setLearningEnabled(!useStore.getState().learningEnabled)} subtitle="Learn from TP/SL outcomes to improve signals" />
+          <View style={styles.paramRow}>
+            <Text style={styles.paramLabel}>Models</Text>
+            <TouchableOpacity onPress={() => useStore.getState().setLlmLoaded(!useStore.getState().llmLoaded)}>
+              <Text style={[styles.paramValue, { color: useStore.getState().llmLoaded ? COLORS.accentGreen : COLORS.textMuted }]}>
+                {useStore.getState().llmLoaded ? 'Loaded' : 'Built-in'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Auto Backtest */}
+        <SectionHeader title="Auto Backtest" />
+        <View style={styles.card}>
+          <ToggleRow label="Run Auto Backtest" value={useStore.getState().autoBacktestConfig.enabled} onToggle={() => {
+            const cfg = useStore.getState().autoBacktestConfig;
+            useStore.getState().setAutoBacktestConfig({ enabled: !cfg.enabled });
+            if (!cfg.enabled) autoBacktest.start(); else autoBacktest.stop();
+          }} subtitle="Background strategy validation" />
+          <Text style={styles.hint}>Results: {useStore.getState().autoBacktestResults.length} backtests</Text>
+        </View>
+
         {/* Performance */}
         <SectionHeader title="Performance" />
         <View style={styles.card}>
@@ -361,4 +404,8 @@ const styles = StyleSheet.create({
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border },
   exportBtn: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   exportText: { color: COLORS.accentBlue, fontSize: 14, fontWeight: '600' },
+  categoryRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 8 },
+  categoryDot: { width: 10, height: 10, borderRadius: 5 },
+  categoryName: { fontSize: 14, fontWeight: '700', flex: 1 },
+  categoryCount: { fontSize: 12, fontWeight: '600' },
 });
